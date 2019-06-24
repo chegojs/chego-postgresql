@@ -1,0 +1,51 @@
+{
+  "name": "@chego/chego-postgresql",
+  "version": "1.0.0",
+  "description": "PostgreSQL driver for Chego library.",
+  "main": "lib/index.js",
+  "files": [
+    "lib/**/*"
+  ],
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "test": "jest --config jestconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chegojs/chego-postgresql.git"
+  },
+  "keywords": [
+    "chego",
+    "database",
+    "postgresql",
+    "fluent interface",
+    "universal",
+    "query"
+  ],
+  "author": "Radoslaw Kamysz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chegojs/chego-postgresql/issues"
+  },
+  "homepage": "https://github.com/chegojs/chego-postgresql#readme",
+  "devDependencies": {
+    "@types/jest": "^24.0.11",
+    "@types/pg": "^7.4.14",
+    "@types/sqlstring": "^2.2.1",
+    "jest": "^24.7.1",
+    "prettier": "^1.16.4",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.15.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.4.3"
+  },
+  "dependencies": {
+    "@chego/chego-api": "2.1.0",
+    "@chego/chego-tools": "^2.1.0",
+    "pg": "^7.11.0",
+    "sqlstring": "^2.3.1"
+  }
+}
