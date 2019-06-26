@@ -1,7 +1,40 @@
-import { IDatabaseDriver, IQuery } from '@chego/chego-api';
-import { execute } from './executor';
+import { IDatabaseDriver, IQuery, IQueryResult, Fn } from '@chego/chego-api';
 import { Pool, PoolClient } from 'pg'
+import { newQueryResult, parseSchemeToSQL, newSqlExecutor } from '@chego/chego-database-boilerplate';
+import { templates } from './templates';
 
+const newTransactionHandle = (client: PoolClient)=>(queries: IQuery[]) =>
+    new Promise(async (resolve, reject) => {
+        try {
+            const result: IQueryResult = newQueryResult();
+            await client.query('BEGIN');
+            for (const query of queries) {
+                const sql: string = parseSchemeToSQL(query.scheme, templates);
+                await client.query(sql, (error: Error, result: any) => {
+                    if(!error) {
+                        result.setData(result);
+                    }
+                });
+            }
+            await client.query('COMMIT');
+            client.release();
+            return resolve(result.getData());
+        } catch (e) {
+            await client.query('ROLLBACK');
+            client.release();
+            return reject(e);
+        }
+    });
+
+const newQueryHandle = (client: PoolClient)=>(query: IQuery) =>
+    new Promise((resolve, reject) => {
+        const sql: string = parseSchemeToSQL(query.scheme, templates);
+        client.query(sql, (error: Error, result: any) => {
+            client.release();
+            return (error) ? reject(error) : resolve(result)
+        });
+    });
+    
 export const chegoPostgres = (): IDatabaseDriver => {
     let initialized: boolean = false;
     let pool: Pool;
@@ -17,7 +50,15 @@ export const chegoPostgres = (): IDatabaseDriver => {
             if (!initialized) {
                 throw new Error('Driver not initialized');
             }
-            return execute(client, queries).then(resolve).catch(reject);
+            const queryHandle: Fn<Promise<any>> = newQueryHandle(client);
+            const transactionHandle: Fn<Promise<any>> = newTransactionHandle(client);
+            
+            return newSqlExecutor()
+                .withQueryHandle(queryHandle)
+                .withTransactionsHandle(transactionHandle)
+                .execute(queries)
+                .then(resolve)
+                .catch(reject);
         }),
         connect: (): Promise<any> => pool.connect().then((poolClient:PoolClient) => {
             client = poolClient;
