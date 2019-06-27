@@ -1,6 +1,6 @@
 import { IDatabaseDriver, IQuery, IQueryResult, Fn } from '@chego/chego-api';
 import { Pool, PoolClient } from 'pg'
-import { newQueryResult, parseSchemeToSQL, newSqlExecutor } from '@chego/chego-database-boilerplate';
+import { newQueryResult, parseSchemeToSQL, newSqlExecutor, SQLQuery } from '@chego/chego-database-boilerplate';
 import { templates } from './templates';
 
 const newTransactionHandle = (client: PoolClient)=>(queries: IQuery[]) =>
@@ -9,10 +9,10 @@ const newTransactionHandle = (client: PoolClient)=>(queries: IQuery[]) =>
             const result: IQueryResult = newQueryResult();
             await client.query('BEGIN');
             for (const query of queries) {
-                const sql: string = parseSchemeToSQL(query.scheme, templates);
-                await client.query(sql, (error: Error, result: any) => {
+                const sql: SQLQuery = parseSchemeToSQL(query.scheme, templates);
+                await client.query(sql.body, (error: Error, data: any) => {
                     if(!error) {
-                        result.setData(result);
+                        result.setData(data);
                     }
                 });
             }
@@ -28,8 +28,8 @@ const newTransactionHandle = (client: PoolClient)=>(queries: IQuery[]) =>
 
 const newQueryHandle = (client: PoolClient)=>(query: IQuery) =>
     new Promise((resolve, reject) => {
-        const sql: string = parseSchemeToSQL(query.scheme, templates);
-        client.query(sql, (error: Error, result: any) => {
+        const sql: SQLQuery = parseSchemeToSQL(query.scheme, templates);
+        client.query(sql.body, (error: Error, result: any) => {
             client.release();
             return (error) ? reject(error) : resolve(result)
         });
